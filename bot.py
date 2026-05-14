@@ -5,11 +5,26 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
 MADINA_USERNAME = "Madina_iticket"
-
+MADINA_CHAT_ID = 5822878003
 claude = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 conversation_history = {}
 
 SYSTEM_PROMPT = """Sen iTicket.uz uchun professional yordamchi assistantsan.
+
+Agar xabarda task bo'lsa (post qiling, storis qoying, bilet, dizayn va h.k.), 
+javobingni quyidagi formatda yoz:
+
+📌 TASK ANIQLANDI
+📋 Tur: [POST / STORIS / BILET / DIZAYN / BOSHQA]
+💬 Talab: [nimani qilish kerak]
+⚡️ Muhimlik: [YUQORI / ODDIY]
+
+Agar oddiy savol bo'lsa — odatdagidek javob ber.
+
+Qoidalar:
+- O'zbek tilida javob ber (rus tilida so'rashsa rus tilida)
+- Qisqa va aniq bo'l
+- iticket.uz havolasi kelsa — Instagram caption va dizaynerga brief yoz"""
 Vazifang:
 1. Mijozlarga bilet, joy, lokatsiya, konsert haqida savollarga javob berish
 2. iticket.uz havolalarini olib, konsertlar uchun Instagram caption yozish
@@ -77,7 +92,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "role": "assistant",
             "content": reply
         })
-
+# Task bo'lsa Madinaga lichkaga yuborish
+        if is_madina_mentioned and "TASK ANIQLANDI" in reply:
+            task_msg = f"📨 Guruhdan task:\n👤 {message.from_user.full_name}\n\n{reply}"
+            await context.bot.send_message(chat_id=MADINA_CHAT_ID, text=task_msg)
         await message.reply_text(reply)
 
     except Exception as e:
